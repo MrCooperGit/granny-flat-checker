@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Checker — Minor Dwelling Feasibility</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Archivo+Expanded:wght@700&display=swap');
+
+  :root{
+    --ink:#16231f;
+    --paper:#eef0e6;
+    --paper-2:#e2e5d8;
+    --line:#c4c8b6;
+    --teal:#1f4a45;
+    --teal-2:#2c6b62;
+    --orange:#c2500f;
+    --orange-2:#e8631a;
+    --green:#3f6b3f;
+    --green-bg:#dfe7d3;
+    --amber:#8a6114;
+    --amber-bg:#efe4c4;
+    --red:#8a2f1f;
+    --red-bg:#ecdad2;
+    --grey:#5b6259;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:28px 28px;
+    color:var(--ink);
+    font-family:'Archivo', sans-serif;
+    min-height:100vh;
+    padding:0 0 60px 0;
+  }
+
+  a{color:var(--teal-2);}
+
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px;}
+
+  header.top{
+    padding:36px 0 22px 0;
+    border-bottom:3px solid var(--ink);
+    margin-bottom:28px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--orange);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .eyebrow .compass{
+    width:16px;height:16px;
+    border:1.5px solid var(--orange);
+    border-radius:50%;
+    position:relative;
+    display:inline-block;
+  }
+  .eyebrow .compass::after{
+    content:"";
+    position:absolute;
+    top:1px;left:50%;
+    width:1.5px;height:6px;
+    background:var(--orange);
+    transform:translateX(-50%);
+  }
+  h1{
+    font-family:'Archivo Expanded', 'Archivo', sans-serif;
+    font-size:clamp(28px,4vw,42px);
+    line-height:1.05;
+    margin:0 0 10px 0;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    font-size:15px;
+    color:var(--teal);
+    max-width:60ch;
+    line-height:1.5;
+  }
+
+  .searchbox{
+    display:flex;
+    gap:0;
+    margin-top:26px;
+    border:2px solid var(--ink);
+    background:#fff;
+  }
+  .searchbox input{
+    flex:1;
+    border:none;
+    padding:16px 16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px;
+    background:transparent;
+    color:var(--ink);
+  }
+  .searchbox input:focus{outline:none;}
+  .searchbox button{
+    border:none;
+    background:var(--ink);
+    color:var(--paper);
+    padding:0 26px;
+    font-family:'Archivo', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .searchbox button:hover{background:var(--teal-2);}
+  .searchbox button:disabled{background:var(--grey);cursor:default;}
+  .searchbox button#googleBtn{
+    background:#fff;
+    color:var(--ink);
+    border-left:2px solid var(--ink);
+    border-right:2px solid var(--ink);
+    font-weight:600;
+  }
+  .searchbox button#googleBtn:hover{background:var(--paper-2);}
+
+  .candidates button .match{color:var(--orange);font-weight:700;}
+  .candidates .cand-empty{
+    padding:12px 16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--grey);
+    border-top:1px solid var(--line);
+  }
+
+  .hint{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--grey);
+    margin-top:8px;
+  }
+
+  .candidates{
+    margin-top:2px;
+    border:2px solid var(--ink);
+    border-top:none;
+    background:#fff;
+  }
+  .candidates button{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:12px 16px;
+    border:none;
+    border-top:1px solid var(--line);
+    background:#fff;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .candidates button:hover{background:var(--paper-2);}
+
+  section.results{margin-top:36px;}
+
+  .sitecard{
+    display:flex;
+    border:2px solid var(--ink);
+    background:#fff;
+    margin-bottom:26px;
+    position:relative;
+  }
+  .sitecard .stripe{
+    width:14px;
+    flex:0 0 14px;
+  }
+  .stripe.go{background:var(--green);}
+  .stripe.caution{background:var(--amber);}
+  .stripe.stop{background:var(--red);}
+  .stripe.unknown{background:var(--grey);}
+
+  .sitecard .body{padding:22px 24px;flex:1;}
+  .sitecard .addr{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--grey);
+    margin-bottom:4px;
+  }
+  .sitecard h2{
+    margin:0 0 14px 0;
+    font-size:22px;
+    font-family:'Archivo Expanded','Archivo',sans-serif;
+  }
+  .verdict-row{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .verdict-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    padding:4px 10px;
+    border-radius:2px;
+  }
+  .tag-go{background:var(--green-bg);color:var(--green);}
+  .tag-caution{background:var(--amber-bg);color:var(--amber);}
+  .tag-stop{background:var(--red-bg);color:var(--red);}
+  .tag-unknown{background:#e6e6e0;color:var(--grey);}
+
+  .meta-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px;
+    margin-top:16px;
+    font-size:13.5px;
+  }
+  .meta-grid div span.k{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--grey);
+    margin-bottom:3px;
+  }
+
+  .geom-warning{
+    margin-top:16px;
+    padding:10px 14px;
+    font-size:12.5px;
+    line-height:1.5;
+    color:var(--amber);
+    background:var(--amber-bg);
+    border-left:3px solid var(--amber);
+  }
+  .geom-warning a{color:var(--amber);text-decoration:underline;}
+
+  .nes-card{
+    border:2px solid var(--teal);
+    background:#fff;
+    padding:20px 22px;
+    margin-bottom:8px;
+  }
+  .nes-card.nes-card-na{
+    border-color:var(--grey);
+  }
+  .nes-head{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .nes-head h3{
+    margin:0;
+    font-size:16px;
+    font-family:'Archivo Expanded','Archivo',sans-serif;
+  }
+  table.nes-table{
+    border-collapse:collapse;
+    width:100%;
+    font-size:13.5px;
+    margin-bottom:14px;
+  }
+  table.nes-table th, table.nes-table td{
+    text-align:left;
+    padding:8px 10px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  table.nes-table th{
+    font-weight:600;
+    color:var(--teal);
+    width:46%;
+  }
+  table.nes-table td{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--ink);
+  }
+  .nes-footnote{
+    font-size:12.5px;
+    line-height:1.55;
+    color:var(--grey);
+    margin-bottom:8px;
+  }
+  .nes-source{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--grey);
+  }
+  .nes-source a{color:var(--teal-2);}
+
+  .attr-wrap{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px dashed var(--line);
+  }
+  table.attr-table{
+    border-collapse:collapse;
+    font-size:12.5px;
+    margin-bottom:8px;
+  }
+  table.attr-table th, table.attr-table td{
+    text-align:left;
+    padding:3px 10px 3px 0;
+    vertical-align:top;
+  }
+  table.attr-table th{
+    color:var(--grey);
+    font-weight:600;
+    white-space:nowrap;
+  }
+  table.attr-table td{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--ink);
+  }
+  a.raw-link{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--teal-2);
+    text-decoration:underline;
+  }
+
+  .geomaps-note{
+    font-size:12.5px;
+    color:var(--grey);
+    line-height:1.5;
+    margin:14px 0 24px 0;
+    padding:10px 14px;
+    background:var(--paper-2);
+    border-left:3px solid var(--teal-2);
+  }
+  .geomaps-note a{color:var(--teal-2);font-weight:600;}
+
+  h3.section-h{
+    font-family:'Archivo Expanded','Archivo',sans-serif;
+    font-size:15px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin:34px 0 12px 0;
+    padding-bottom:8px;
+    border-bottom:2px solid var(--ink);
+  }
+
+  .constraint-list{
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .constraint{
+    background:#fff;
+    padding:13px 16px;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .constraint .dot{
+    width:9px;height:9px;
+    border-radius:50%;
+    margin-top:5px;
+    flex:0 0 9px;
+  }
+  .dot.clear{background:var(--green);}
+  .dot.flag{background:var(--orange);}
+  .dot.na{background:var(--line);border:1px solid var(--grey);}
+  .constraint .ctext{flex:1;}
+  .constraint .cname{font-weight:600;font-size:14px;}
+  .constraint .cdesc{font-size:13px;color:var(--teal);margin-top:2px;line-height:1.45;}
+  .constraint .cnote{font-family:'IBM Plex Mono', monospace;font-size:11.5px;color:var(--grey);margin-top:4px;}
+
+  .loading-row{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--grey);
+    padding:12px 0;
+  }
+  .spinner{
+    display:inline-block;width:10px;height:10px;border-radius:50%;
+    border:2px solid var(--line);border-top-color:var(--orange);
+    animation:spin .7s linear infinite;
+    margin-right:8px;vertical-align:middle;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .disclaimer{
+    margin-top:34px;
+    padding:16px 18px;
+    border:1px dashed var(--grey);
+    font-size:12.5px;
+    color:var(--teal);
+    line-height:1.6;
+    background:var(--paper-2);
+  }
+  .disclaimer strong{color:var(--ink);}
+
+  footer.credit{
+    margin-top:40px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--grey);
+    text-align:center;
+  }
+
+  .error-box{
+    border:2px solid var(--red);
+    background:var(--red-bg);
+    color:var(--red);
+    padding:14px 16px;
+    font-size:13.5px;
+    margin-top:16px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .spinner{animation:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="sandboxBanner" style="display:none;border:2px solid var(--orange);background:var(--amber-bg);color:var(--amber);padding:14px 16px;font-size:13.5px;line-height:1.5;margin-bottom:20px;">
+    <strong>Open this file directly in your browser to use it.</strong> You're viewing it inside an embedded preview, which blocks the live calls to Auckland Council's map data for security. Download the file (or drag it into a browser tab) and it will work normally.
+  </div>
+
+  <header class="top">
+    <div class="eyebrow"><span class="compass"></span>Auckland Council open data · site screening</div>
+    <h1>Can I put a granny flat here?</h1>
+    <div class="sub">Enter an Auckland property address. This tool pulls zoning and constraint layers straight from Auckland Council's public GIS services to give you a first-pass read on minor dwelling / second dwelling feasibility.</div>
+
+    <div class="searchbox">
+      <input id="addrInput" type="text" placeholder="e.g. 135 Albert Street, Auckland" autocomplete="off">
+      <button id="googleBtn" title="Search this address on Google Maps" type="button">Maps ↗</button>
+      <button id="searchBtn" type="button">Check site</button>
+    </div>
+    <div class="hint">Start typing — matching Auckland addresses appear below automatically. Can't find it? Use "Maps ↗" to confirm the address on Google Maps first.</div>
+    <div id="candidateBox"></div>
+  </header>
+
+  <section class="results" id="results"></section>
+
+  <div class="disclaimer">
+    <strong>Not a substitute for a LIM or planner.</strong> This screening tool checks Auckland Council's public map layers against the property's actual parcel boundary where that boundary can be found, plus the national granny-flat standard (NES-DMRU, in force since 15 January 2026) for setback and floor-area rules. It doesn't check every remaining district plan rule (e.g. height-in-relation-to-boundary for anything larger than a permitted DMRU, parking, or overlapping precinct rules), map data can lag real-world changes, and there's no public layer here for Watercare's drinking-water main locations (only wastewater and stormwater are published) — a Watercare as-built request or Before U Dig NZ enquiry is still needed for that. Before committing, order a LIM, check the Auckland Unitary Plan rules for the specific zone and any precincts on the property, and consider a pre-application meeting with Auckland Council.
+  </div>
+
+  <footer class="credit">Data: services1.arcgis.com/n4yPwebTjJCmXB6W (Auckland Council ArcGIS REST services) · Built for one-off site screening, not stored or shared</footer>
+</div>
+
+<script>
+const BASE = "https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services";
+
+// ---- Zone code -> friendly info -------------------------------------------------
+// Derived from Unitary_Plan_Base_Zone renderer domain (ZONE field).
+const ZONES = {
+  23:{name:"Residential – Large Lot Zone", group:"res"},
+  20:{name:"Residential – Rural and Coastal Settlement Zone", group:"res"},
+  19:{name:"Residential – Single House Zone", group:"res"},
+  18:{name:"Residential – Mixed Housing Suburban Zone", group:"res"},
+  60:{name:"Residential – Mixed Housing Urban Zone", group:"res"},
+  8:{name:"Residential – Terrace Housing and Apartment Buildings Zone", group:"res-intensive"},
+  31:{name:"Open Space – Conservation Zone", group:"openspace"},
+  32:{name:"Open Space – Informal Recreation Zone", group:"openspace"},
+  33:{name:"Open Space – Sport and Active Recreation Zone", group:"openspace"},
+  62:{name:"Open Space – Civic Spaces Zone", group:"openspace"},
+  34:{name:"Open Space – Community Zone", group:"openspace"},
+  35:{name:"Business – City Centre Zone", group:"business"},
+  10:{name:"Business – Metropolitan Centre Zone", group:"business"},
+  22:{name:"Business – Town Centre Zone", group:"business"},
+  7:{name:"Business – Local Centre Zone", group:"business"},
+  44:{name:"Business – Neighbourhood Centre Zone", group:"business"},
+  12:{name:"Business – Mixed Use Zone", group:"business-mixed"},
+  49:{name:"Business – General Business Zone", group:"business"},
+  1:{name:"Business – Business Park Zone", group:"business"},
+  5:{name:"Business – Heavy Industry Zone", group:"industry"},
+  17:{name:"Business – Light Industry Zone", group:"industry"},
+  4:{name:"Future Urban Zone", group:"future"},
+  61:{name:"Green Infrastructure Corridor", group:"other"},
+  16:{name:"Rural – Rural Production Zone", group:"rural"},
+  11:{name:"Rural – Mixed Rural Zone", group:"rural"},
+  46:{name:"Rural – Rural Coastal Zone", group:"rural"},
+  15:{name:"Rural – Rural Conservation Zone", group:"rural"},
+  3:{name:"Rural – Countryside Living Zone", group:"rural"},
+  68:{name:"Rural – Waitakere Foothills Zone", group:"rural"},
+  69:{name:"Rural – Waitakere Ranges Zone", group:"rural"},
+  48:{name:"Strategic Transport Corridor Zone", group:"other"},
+  50:{name:"Strategic Transport Corridor Zone", group:"other"},
+  29:{name:"Strategic Transport Corridor Zone", group:"other"},
+  26:{name:"Strategic Transport Corridor Zone", group:"other"},
+  65:{name:"Special Purpose Zone", group:"special"},
+  67:{name:"Special Purpose Zone", group:"special"},
+  54:{name:"Special Purpose Zone", group:"special"},
+  53:{name:"Special Purpose Zone", group:"special"},
+  52:{name:"Special Purpose Zone", group:"special"},
+  51:{name:"Special Purpose Zone", group:"special"},
+  58:{name:"Special Purpose Zone", group:"special"},
+  57:{name:"Special Purpose Zone", group:"special"},
+  56:{name:"Special Purpose Zone", group:"special"},
+  55:{name:"Special Purpose Zone", group:"special"},
+  63:{name:"Special Purpose Zone", group:"special"},
+  64:{name:"Special Purpose Zone", group:"special"},
+  30:{name:"Coastal – General Coastal Marine Zone", group:"coastal"},
+  40:{name:"Coastal – Marina Zone", group:"coastal"},
+  41:{name:"Coastal – Mooring Zone", group:"coastal"},
+  37:{name:"Coastal – Minor Port Zone", group:"coastal"},
+  45:{name:"Coastal – Ferry Terminal Zone", group:"coastal"},
+  39:{name:"Coastal – Defence Zone", group:"coastal"},
+  59:{name:"Coastal – Coastal Transition Zone", group:"coastal"},
+  25:{name:"Water", group:"other"},
+  43:{name:"Hauraki Gulf Islands", group:"other"},
+  27:{name:"Road", group:"other"}
+};
+
+const ZONE_GROUP_INFO = {
+  "res":{
+    verdict:"go",
+    label:"Generally workable",
+    nes:"residential",
+    text:"Residential zones are covered by the national granny-flat standard (NES-DMRU) — see the setback rules below. On top of that, the Auckland Unitary Plan's own zone-specific yard and height rules apply to anything bigger than a permitted DMRU."
+  },
+  "res-intensive":{
+    verdict:"go",
+    label:"Generally workable",
+    nes:"residential",
+    text:"Terrace Housing and Apartment Buildings zoning is still a \"residential zone\" for the national granny-flat standard (NES-DMRU) — see the setback rules below. Site-specific development standards (coverage, outlook, servicing) matter more here than in lower-density zones."
+  },
+  "rural":{
+    verdict:"go",
+    label:"Generally workable",
+    nes:"rural",
+    text:"Rural zones are covered by the national granny-flat standard (NES-DMRU), with larger setbacks than residential zones — see below. Provisions still vary between the different rural zone types for anything beyond a permitted DMRU, so confirm the exact Unitary Plan standard for this zone."
+  },
+  "business":{
+    verdict:"caution",
+    label:"Not a typical residential site",
+    nes:null,
+    text:"Business zones are not primarily residential and aren't covered by the national granny-flat standard (NES-DMRU) — a standalone minor dwelling is unlikely to be a straightforward permitted activity here."
+  },
+  "business-mixed":{
+    verdict:"caution",
+    label:"Residential may be provided for",
+    nes:"mixeduse",
+    text:"Business – Mixed Use Zone is treated as a \"mixed use zone\" under the national granny-flat standard (NES-DMRU) — see below. Setbacks and coverage here follow the Unitary Plan's own rules for the zone rather than a fixed national number."
+  },
+  "industry":{
+    verdict:"stop",
+    label:"Not suitable for a dwelling",
+    nes:null,
+    text:"Industrial zones generally do not provide for residential activity, including minor dwellings, due to reverse-sensitivity and amenity concerns."
+  },
+  "openspace":{
+    verdict:"stop",
+    label:"Not suitable for a dwelling",
+    nes:null,
+    text:"Open space zones are for parks, reserves and recreation — they are not intended for residential building of any kind."
+  },
+  "coastal":{
+    verdict:"stop",
+    label:"Not applicable",
+    nes:null,
+    text:"This is a coastal marine / marina-type zone, not a residential land zone — a granny flat isn't applicable here."
+  },
+  "future":{
+    verdict:"caution",
+    label:"Constrained until rezoned",
+    nes:null,
+    text:"Future Urban Zone land is generally held for future development via structure planning, and new dwellings (including minor dwellings) are usually tightly restricted until the land is rezoned and serviced."
+  },
+  "special":{
+    verdict:"caution",
+    label:"Depends on the specific precinct",
+    nes:"check-maori",
+    text:"Special Purpose zones each carry their own bespoke rules (e.g. airport, hospital, marae, quarry). If this is a Māori Purpose zone it's covered by the national granny-flat standard (NES-DMRU, see below) — otherwise whether a minor dwelling is possible depends entirely on that specific zone's own provisions."
+  },
+  "other":{
+    verdict:"unknown",
+    label:"Check manually",
+    nes:null,
+    text:"This area falls under a zone type this tool doesn't have specific guidance for (e.g. transport corridor, water, road reserve). A residential minor dwelling is unlikely to apply."
+  }
+};
+
+// ---- National granny-flat standard (NES-DMRU) --------------------------------------
+// Resource Management (National Environmental Standards for Detached Minor
+// Residential Units) Regulations 2025 — in force nationwide from 15 January 2026.
+// Gives ONE detached minor residential unit (DMRU) per site as a permitted activity
+// (no resource consent) in Residential, Rural, Mixed Use and Māori Purpose zones,
+// provided it meets these standards. A district plan rule that is MORE LENIENT than
+// the NES still applies instead (e.g. the AUP's old 65m² Single House Zone standard
+// is tighter than the new 70m² national cap, so most sites now use the national one).
+const NES_DMRU = {
+  "residential":{
+    title:"Residential zone — national standard (NES-DMRU)",
+    rows:[
+      ["Max internal floor area","70 m² (excludes garage)"],
+      ["Max building coverage","50% of the site"],
+      ["Setback from front, side & rear boundaries","2 m minimum"],
+      ["Setback from the principal dwelling","2 m minimum"],
+      ["Units per site","1 detached minor residential unit, permitted"]
+    ]
+  },
+  "rural":{
+    title:"Rural zone — national standard (NES-DMRU)",
+    rows:[
+      ["Max internal floor area","70 m² (excludes garage)"],
+      ["Building coverage","As set by the specific Unitary Plan rural zone rule"],
+      ["Setback from front boundary","10 m minimum"],
+      ["Setback from side & rear boundaries","5 m minimum"],
+      ["Setback from the principal dwelling","2 m minimum"],
+      ["Units per site","1 detached minor residential unit, permitted"]
+    ]
+  },
+  "mixeduse":{
+    title:"Mixed use zone — national standard (NES-DMRU)",
+    rows:[
+      ["Max internal floor area","70 m² (excludes garage)"],
+      ["Building coverage & boundary setbacks","As set by the Unitary Plan's Mixed Use Zone rules"],
+      ["Setback from the principal dwelling","2 m minimum"],
+      ["Units per site","1 detached minor residential unit, permitted"]
+    ]
+  },
+  "maori":{
+    title:"Māori Purpose zone — national standard (NES-DMRU)",
+    rows:[
+      ["Max internal floor area","70 m² (excludes garage)"],
+      ["Building coverage & boundary setbacks","As set by the Unitary Plan's Māori Purpose Zone rules"],
+      ["Setback from the principal dwelling","2 m minimum"],
+      ["Units per site","1 detached minor residential unit, permitted"]
+    ]
+  }
+};
+const NES_ALWAYS_APPLY = "Even where these national standards are met, a few things still sit outside them and can still require consent or sign-off: natural hazard mitigation (e.g. minimum floor levels for flood-prone land), site-specific water/wastewater/stormwater servicing, reverse-sensitivity rules (airport and port noise, electricity line and road/rail corridor setbacks), heritage and other overlay protections, and — separately from resource consent — Building Act / building code compliance including a Licensed Building Practitioner's certificate of work.";
+
+// ---- Constraint layers to check --------------------------------------------------
+// Each: friendly name, service name, note shown when the layer intersects the site.
+const CONSTRAINT_GROUPS = [
+  {
+    heading: "Natural hazards",
+    items: [
+      {name:"Flood plain", service:"Flood_Plains", note:"Building within a flood plain usually triggers extra stormwater / floor-level requirements and often needs resource consent."},
+      {name:"Flood-prone area", service:"Flood_Prone_Areas", note:"Sites that pond or flood in heavy rain typically face floor level and stormwater conditions."},
+      {name:"Flood-sensitive area", service:"Flood_Sensitive_Areas", note:"Additional impervious area (like a new dwelling) may be restricted or conditioned here."},
+      {name:"Overland flow path", service:"Overland_Flow_Paths", note:"A very common constraint — building over a flow path is usually avoided or needs engineering and consent."},
+      {name:"Coastal inundation (1% AEP + 1m)", service:"Coastal_Inundation_1_per_cent_AEP_Plus_1m_Control", note:"Coastal flooding risk may require raised floor levels or trigger consent."},
+      {name:"Coastal instability / erosion", service:"CoastalInstabilityAndErosion", note:"Ground stability near the coast can restrict where and how you can build."},
+      {name:"Large-scale landslide susceptibility", service:"Large_Scale_Landslide_Susceptibility", note:"May require a geotechnical report before building consent is granted."},
+      {name:"Shallow landslide susceptibility", service:"Shallow_Landslide_Susceptibility", note:"May require a geotechnical report before building consent is granted."},
+      {name:"Liquefaction vulnerability", service:"Liquefaction_Vulnerability_Basic_Assessment", note:"Liquefaction-prone ground often needs specific foundation design and geotechnical sign-off."}
+    ]
+  },
+  {
+    heading: "Heritage, character & landscape",
+    items: [
+      {name:"Historic heritage place (extent)", service:"Historic_Heritage_Overlay_Extent_of_Place", note:"Heritage-listed sites usually require resource consent for new buildings and can limit design freedom."},
+      {name:"Historic heritage place", service:"Historic_Heritage_Overlay_Place", note:"Heritage-listed sites usually require resource consent for new buildings and can limit design freedom."},
+      {name:"Sites of significance to mana whenua", service:"Sites_and_Places_of_Significance_to_Mana_Whenua_Overlay", note:"Consultation with mana whenua and extra assessment is typically required before building."},
+      {name:"Special character area", service:"Special_Character_Areas_Overlay_Residential_and_Business", note:"Design, materials and scale are more tightly controlled to protect the area's character."},
+      {name:"Notable tree", service:"Notable_Trees_Overlay", note:"Works near a notable tree (including root zones) usually need resource consent."},
+      {name:"Notable group of trees", service:"Notable_Group_of_Trees_Overlay", note:"Works near notable trees (including root zones) usually need resource consent."},
+      {name:"Outstanding natural landscape", service:"Outstanding_Natural_Landscapes_Overlay", note:"New buildings in these landscapes are closely scrutinised and often need consent."},
+      {name:"Outstanding natural feature", service:"Outstanding_Natural_Features_Overlay", note:"New buildings near outstanding natural features are closely scrutinised."},
+      {name:"High natural character (coastal)", service:"High_Natural_Character_Overlay", note:"Coastal character protections can restrict new buildings and their visibility."},
+      {name:"Outstanding natural character (coastal)", service:"Outstanding_Natural_Character_Overlay", note:"Strong protections apply — new buildings are closely scrutinised."},
+      {name:"Significant ecological area", service:"Significant_Ecological_Areas_Overlay", note:"Vegetation clearance and earthworks are tightly controlled; consent is often needed."},
+      {name:"Waitākere Ranges Heritage Area", service:"Waitakere_Ranges_Heritage_Area_Overlay", note:"Extra rules apply across the whole heritage area to protect its bush character."}
+    ]
+  },
+  {
+    heading: "Infrastructure & other overlays",
+    items: [
+      {name:"Volcanic viewshaft (locally significant)", service:"Locally_Significant_Volcanic_Viewshafts_Overlay", note:"Building height can be capped to protect views to/from volcanic cones."},
+      {name:"Volcanic viewshaft / height-sensitive area (regional)", service:"Regionally_Significant_Volcanic_Viewshafts_And_Height_Sensitive_Areas_Overlay", note:"Building height can be capped to protect views to/from volcanic cones."},
+      {name:"Aircraft noise overlay", service:"Aircraft_Noise_Overlay", note:"New habitable rooms may need extra sound insulation to meet internal noise standards."},
+      {name:"Airport approach surface", service:"Airport_Approach_Surface", note:"Building height is restricted to protect aircraft approach paths."},
+      {name:"Designation (e.g. road, school, utility)", service:"Designation", note:"Designated land is set aside for a public work — building is usually restricted without the requiring authority's approval."},
+      {name:"National Grid corridor", service:"National_Grid_Corridor_Overlay", note:"Building under or near transmission lines has setback and height restrictions."},
+      {name:"Quarry buffer area", service:"Quarry_Buffer_Area_Overlay", note:"Sites near quarries can face noise, vibration and dust conditions on new dwellings."}
+    ]
+  },
+  {
+    heading: "Underground pipes & services (within ~15 m of the address point)",
+    items: [
+      {name:"Wastewater pipe", service:"wm_Wastewater_Pipes_Public", note:"A wastewater main or lateral runs near this point. Building over or too close to it is usually restricted, and Watercare may require a building-over-pipe approval or the pipe to be relocated.", buffer:15},
+      {name:"Stormwater pipe", service:"Stormwater_Pipe", note:"A public stormwater pipe runs near this point. Building over or too close to it is usually restricted without an approval from Auckland Council's Healthy Waters team.", buffer:15},
+      {name:"Stormwater manhole / chamber", service:"Stormwater_Manhole_And_Chamber", note:"Access chambers need to stay clear and accessible — factor this into where a new dwelling and its access can go.", buffer:15},
+      {name:"Stormwater connection point", service:"Stormwater_Connection", note:"This can be useful, not just a constraint — it may be an existing lateral you could tie a new dwelling's stormwater into rather than building a new connection.", buffer:15},
+      {name:"Stormwater treatment device", service:"Stormwater_Treatment_Device", note:"Rain gardens, filters and similar devices need clear access and can't be built over.", buffer:15},
+      {name:"Stormwater soakage system", service:"Stormwater_Soakage_System", note:"Soakage fields need to stay clear of new buildings and impervious surfaces to keep working."}
+    ]
+  }
+];
+
+// Note: this Council GIS instance publishes wastewater and stormwater networks, but not
+// Watercare's drinking-water supply main/lateral locations — there's no public "water
+// supply pipe" layer in this service directory. For exact water main and lateral
+// positions, a Watercare "as-built" / plans request or a Before U Dig NZ enquiry is
+// still the right step before any excavation.
+
+// ---- helpers ----------------------------------------------------------------------
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// JSONP loader — sidesteps CORS entirely, since ArcGIS Server/Online supports
+// the legacy `callback` param and script-tag loads aren't subject to CORS.
+function jsonp(url, timeoutMs = 15000){
+  return new Promise((resolve, reject) => {
+    const cbName = "__acgis_cb_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const script = document.createElement("script");
+    let settled = false;
+
+    function cleanup(){
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      clearTimeout(timer);
+    }
+    window[cbName] = (data) => {
+      if(settled) return;
+      settled = true;
+      cleanup();
+      resolve(data);
+    };
+    const timer = setTimeout(() => {
+      if(settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("Request timed out"));
+    }, timeoutMs);
+    script.onerror = () => {
+      if(settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("Network error"));
+    };
+    const sep = url.includes("?") ? "&" : "?";
+    script.src = `${url}${sep}callback=${cbName}`;
+    document.body.appendChild(script);
+  });
+}
+
+async function geocode(term){
+  const where = `UPPER(FullAddress) LIKE UPPER('%${term.replace(/'/g,"''")}%')`;
+  const url = `${BASE}/AC_Address_Query/FeatureServer/0/query?where=${encodeURIComponent(where)}&outFields=FullAddress,OBJECTID&returnGeometry=true&resultRecordCount=8&f=json`;
+  const data = await jsonp(url);
+  if(data.error) throw new Error(data.error.message || "Address lookup failed");
+  return (data.features || []).filter(f => f.geometry);
+}
+
+function buildGeometryParam(siteGeom){
+  if(siteGeom.type === "polygon"){
+    return {
+      geometry: JSON.stringify({rings: siteGeom.rings, spatialReference:{wkid:102100}}),
+      geometryType: "esriGeometryPolygon"
+    };
+  }
+  return {
+    geometry: `${siteGeom.x},${siteGeom.y}`,
+    geometryType: "esriGeometryPoint"
+  };
+}
+
+async function queryLayer(serviceName, siteGeom, bufferMeters){
+  const {geometry, geometryType} = buildGeometryParam(siteGeom);
+  // Fallback (no parcel polygon found) always gets a minimum search radius, since a bare
+  // point almost never sits exactly on a buried pipe or a flow path. When we do have the
+  // real parcel polygon, only apply a buffer where the item explicitly asks for one
+  // (e.g. underground services just outside the boundary, in the road berm).
+  const distance = bufferMeters != null ? bufferMeters : (siteGeom.type === "polygon" ? 0 : 25);
+  let url = `${BASE}/${encodeURIComponent(serviceName)}/FeatureServer/0/query?geometry=${encodeURIComponent(geometry)}&geometryType=${geometryType}&inSR=102100&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=false&f=json`;
+  if(distance){
+    url += `&distance=${distance}&units=esriSRUnit_Meter`;
+  }
+  try{
+    const data = await jsonp(url);
+    if(data.error) return {ok:false, error:data.error.message, url};
+    return {ok:true, features:data.features || [], url};
+  }catch(e){
+    return {ok:false, error:e.message, url};
+  }
+}
+
+function googleMapsUrl(term){
+  const q = term.trim() ? `${term.trim()}, Auckland, New Zealand` : "Auckland, New Zealand";
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+
+function cleanAttrs(attrs){
+  const skip = new Set(["OBJECTID","GlobalID","Shape__Area","Shape__Length","GROUPZONE","VALIDATIONSTATE"]);
+  const out = {};
+  for(const k in attrs){
+    if(skip.has(k)) continue;
+    if(attrs[k] === null || attrs[k] === "") continue;
+    out[k] = attrs[k];
+  }
+  return out;
+}
+
+// ---- main flow ----------------------------------------------------------------------
+const input = document.getElementById("addrInput");
+const btn = document.getElementById("searchBtn");
+const googleBtn = document.getElementById("googleBtn");
+const candidateBox = document.getElementById("candidateBox");
+const resultsEl = document.getElementById("results");
+
+let debounceTimer = null;
+let searchToken = 0; // guards against stale async responses overwriting newer ones
+
+btn.addEventListener("click", () => doSearch(true));
+input.addEventListener("keydown", e => { if(e.key === "Enter") doSearch(true); });
+input.addEventListener("input", () => {
+  clearTimeout(debounceTimer);
+  const term = input.value.trim();
+  if(term.length < 4){
+    candidateBox.innerHTML = "";
+    return;
+  }
+  debounceTimer = setTimeout(() => doSearch(false), 350);
+});
+googleBtn.addEventListener("click", () => {
+  window.open(googleMapsUrl(input.value), "_blank", "noopener");
+});
+
+// If this page is running inside an embedded/sandboxed preview (e.g. pasted into
+// a chat tool), outbound calls to Auckland Council's servers are typically blocked.
+// Let the person know to open the file directly instead of hitting a silent wall.
+(function checkSandbox(){
+  try{
+    if(window.self !== window.top){
+      document.getElementById("sandboxBanner").style.display = "block";
+    }
+  }catch(e){
+    // Cross-origin access to window.top throws in some sandboxes — that itself is a signal.
+    document.getElementById("sandboxBanner").style.display = "block";
+  }
+})();
+
+function renderCandidateList(matches, term){
+  if(matches.length === 0){
+    candidateBox.innerHTML = `<div class="candidates"><div class="cand-empty">No address matched "${esc(term)}" in Auckland Council's register yet. Keep typing, or use "Maps ↗" to look it up.</div></div>`;
+    return;
+  }
+  const box = document.createElement("div");
+  box.className = "candidates";
+  matches.forEach(f => {
+    const full = f.attributes.FullAddress || "";
+    const b = document.createElement("button");
+    const idx = full.toUpperCase().indexOf(term.toUpperCase());
+    if(idx >= 0){
+      b.innerHTML = `${esc(full.slice(0,idx))}<span class="match">${esc(full.slice(idx, idx+term.length))}</span>${esc(full.slice(idx+term.length))}`;
+    }else{
+      b.textContent = full;
+    }
+    b.type = "button";
+    b.addEventListener("click", () => { candidateBox.innerHTML=""; input.value = full; selectAddress(f); });
+    box.appendChild(b);
+  });
+  candidateBox.innerHTML = "";
+  candidateBox.appendChild(box);
+}
+
+async function doSearch(forceRunEvenIfShort){
+  const term = input.value.trim();
+  resultsEl.innerHTML = "";
+  if(term.length < 4){
+    if(forceRunEvenIfShort){
+      candidateBox.innerHTML = `<div class="error-box">Type a bit more of the address — at least a street number and part of the street name.</div>`;
+    }
+    return;
+  }
+  const myToken = ++searchToken;
+  if(forceRunEvenIfShort){
+    btn.disabled = true;
+    btn.textContent = "Searching…";
+  }
+  try{
+    const matches = await geocode(term);
+    if(myToken !== searchToken) return; // a newer keystroke already started another search
+    if(matches.length === 1 && forceRunEvenIfShort){
+      candidateBox.innerHTML = "";
+      selectAddress(matches[0]);
+    }else{
+      renderCandidateList(matches, term);
+    }
+  }catch(e){
+    if(myToken !== searchToken) return;
+    candidateBox.innerHTML = `<div class="error-box">Couldn't reach Auckland Council's address service (${esc(e.message)}). Try again in a moment, or confirm the address via "Maps ↗" first.</div>`;
+  }finally{
+    if(forceRunEvenIfShort){
+      btn.disabled = false;
+      btn.textContent = "Check site";
+    }
+  }
+}
+
+function resolveNesCategory(zoneInfo, zoneGroupInfo){
+  if(!zoneInfo || !zoneGroupInfo) return null;
+  if(zoneGroupInfo.nes === "check-maori"){
+    const n = (zoneInfo.rawName || "").toLowerCase();
+    return (n.includes("maori") || n.includes("māori")) ? "maori" : null;
+  }
+  return zoneGroupInfo.nes || null;
+}
+
+async function selectAddress(feature){
+  const addr = feature.attributes.FullAddress;
+  const {x, y} = feature.geometry;
+
+  resultsEl.innerHTML = `
+    <div class="loading-row"><span class="spinner"></span>Finding the parcel boundary for ${esc(addr)}…</div>
+  `;
+
+  // Fetch the actual parcel polygon first. Checking against the real site boundary
+  // (rather than just the address point) matters a lot on large or irregular sites —
+  // a flow path or pipe at the back of a long rural lot can sit well over 100m from
+  // where the address point happens to be placed.
+  const propUrl = `${BASE}/AC_Property_Query/FeatureServer/0/query?geometry=${x},${y}&geometryType=esriGeometryPoint&inSR=102100&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true&f=json`;
+  let propInfo = null;
+  let siteGeom = {type:"point", x, y};
+  try{
+    const propData = await jsonp(propUrl);
+    if(!propData.error && propData.features && propData.features.length){
+      const feat = propData.features[0];
+      propInfo = feat.attributes;
+      if(feat.geometry && feat.geometry.rings){
+        siteGeom = {type:"polygon", rings: feat.geometry.rings};
+      }
+    }
+  }catch(e){
+    // fall through to point-based siteGeom — a parcel lookup failure shouldn't block the rest of the check
+  }
+
+  resultsEl.innerHTML = `
+    <div class="loading-row"><span class="spinner"></span>Checking zoning and ${CONSTRAINT_GROUPS.reduce((n,g)=>n+g.items.length,0)} constraint layers across the ${siteGeom.type === "polygon" ? "parcel boundary" : "address point"} for ${esc(addr)}…</div>
+  `;
+
+  const zoneRes = await queryLayer("Unitary_Plan_Base_Zone", siteGeom);
+
+  let zoneInfo = null;
+  let multiZoneCount = 0;
+  if(zoneRes.ok && zoneRes.features.length){
+    const a = zoneRes.features[0].attributes;
+    const z = ZONES[a.ZONE];
+    const rawName = a.NAME || "";
+    zoneInfo = {
+      code: a.ZONE,
+      name: z ? z.name : (rawName || `Zone ${a.ZONE}`),
+      rawName,
+      group: z ? z.group : "other"
+    };
+    multiZoneCount = zoneRes.features.length;
+  }
+
+  const zoneGroupInfo = zoneInfo ? ZONE_GROUP_INFO[zoneInfo.group] : null;
+  const nesCategory = resolveNesCategory(zoneInfo, zoneGroupInfo);
+
+  // Kick off all constraint queries in parallel, against the same site geometry
+  const allItems = CONSTRAINT_GROUPS.flatMap(g => g.items.map(it => ({...it, group:g.heading})));
+  const constraintPromises = allItems.map(it => queryLayer(it.service, siteGeom, it.buffer));
+
+  renderShell(addr, zoneInfo, zoneGroupInfo, propInfo, nesCategory, siteGeom, multiZoneCount);
+
+  const settled = await Promise.all(constraintPromises);
+  const results = allItems.map((it, i) => ({...it, result: settled[i]}));
+  renderConstraints(results);
+  updateVerdictStripe(zoneGroupInfo, results);
+}
+
+function renderShell(addr, zoneInfo, zoneGroupInfo, propInfo, nesCategory, siteGeom, multiZoneCount){
+  const stripeClass = zoneGroupInfo ? zoneGroupInfo.verdict : "unknown";
+  const tagClass = "tag-" + stripeClass;
+  const verdictLabel = zoneGroupInfo ? zoneGroupInfo.label : "Zone not identified";
+  const verdictText = zoneGroupInfo ? zoneGroupInfo.text : "This point didn't return a mapped zone — it may be outside the Auckland Council area, or fall on a boundary. Try re-selecting the address.";
+
+  let metaHtml = "";
+  if(propInfo){
+    const rows = [];
+    if(propInfo.FORMATTEDADDRESS) rows.push(["Formatted address", propInfo.FORMATTEDADDRESS]);
+    if(propInfo.PROPERTYDESCRIPTION) rows.push(["Legal description", propInfo.PROPERTYDESCRIPTION]);
+    if(propInfo.FORMATTEDTITLES) rows.push(["Title(s)", propInfo.FORMATTEDTITLES]);
+    if(propInfo.SITETYPE) rows.push(["Property type", propInfo.SITETYPE]);
+    if(propInfo.TLADESCRIPTION) rows.push(["Local board / TLA", propInfo.TLADESCRIPTION]);
+    metaHtml = `<div class="meta-grid">${rows.map(([k,v])=>`<div><span class="k">${esc(k)}</span>${esc(v)}</div>`).join("")}</div>`;
+  }
+
+  let geomNoteHtml = "";
+  if(siteGeom && siteGeom.type === "point"){
+    geomNoteHtml = `<div class="geom-warning">Couldn't find this property's parcel boundary, so checks below only cover a 25m radius around the address point rather than the full site — on a large or oddly-shaped lot, something further from the address point could be missed. Worth double-checking on <a href="https://geomapspublic.aucklandcouncil.govt.nz/viewer/index.html?appid=8513964216b544bf8aab2b3b85b8813d" target="_blank" rel="noopener">GeoMaps</a> directly.</div>`;
+  }else if(multiZoneCount > 1){
+    geomNoteHtml = `<div class="geom-warning">This parcel overlaps ${multiZoneCount} different zone areas (a "split-zoned" site) — the zone shown above is just the first one found. Check <a href="https://geomapspublic.aucklandcouncil.govt.nz/viewer/index.html?appid=8513964216b544bf8aab2b3b85b8813d" target="_blank" rel="noopener">GeoMaps</a> to see exactly where the zone boundary crosses the site.</div>`;
+  }
+
+  let nesHtml;
+  if(nesCategory && NES_DMRU[nesCategory]){
+    const spec = NES_DMRU[nesCategory];
+    nesHtml = `
+      <div class="nes-card">
+        <div class="nes-head">
+          <span class="verdict-tag tag-go">NES-DMRU applies</span>
+          <h3>${esc(spec.title)}</h3>
+        </div>
+        <table class="nes-table">
+          ${spec.rows.map(([k,v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}
+        </table>
+        <div class="nes-footnote">${esc(NES_ALWAYS_APPLY)}</div>
+        <div class="nes-source">Source: Resource Management (National Environmental Standards for Detached Minor Residential Units) Regulations 2025, in force since 15 Jan 2026 — <a href="https://www.legislation.govt.nz/regulation/public/2025/0315/latest/contents.html" target="_blank" rel="noopener">legislation.govt.nz</a></div>
+      </div>`;
+  }else{
+    nesHtml = `
+      <div class="nes-card nes-card-na">
+        <div class="nes-head">
+          <span class="verdict-tag tag-unknown">NES-DMRU doesn't apply here</span>
+          <h3>Falls back to zone-specific Unitary Plan rules</h3>
+        </div>
+        <div class="nes-footnote">The national granny-flat standard (NES-DMRU) only covers Residential, Rural, Mixed Use and Māori Purpose zones. This zone sits outside that list, so any minor dwelling here is governed entirely by the Auckland Unitary Plan's own rules for the zone (or may not be provided for at all) — check the <a href="https://unitaryplan.aucklandcouncil.govt.nz/" target="_blank" rel="noopener">Auckland Unitary Plan</a> directly, or Auckland Council's duty planner.</div>
+      </div>`;
+  }
+
+  resultsEl.innerHTML = `
+    <div class="sitecard">
+      <div class="stripe ${stripeClass}" id="stripeEl"></div>
+      <div class="body">
+        <div class="addr">${esc(addr)}</div>
+        <h2>${zoneInfo ? esc(zoneInfo.name) : "Zone unknown"}</h2>
+        <div class="verdict-row">
+          <span class="verdict-tag ${tagClass}" id="verdictTag">${esc(verdictLabel)}</span>
+        </div>
+        <div style="font-size:14px;line-height:1.55;color:var(--teal);max-width:65ch;">${esc(verdictText)}</div>
+        ${metaHtml}
+        ${geomNoteHtml}
+      </div>
+    </div>
+    <h3 class="section-h">Setback &amp; size rules for a granny flat here</h3>
+    ${nesHtml}
+    <div class="geomaps-note">
+      Want to see any of these overlays drawn on a map? Open <a href="https://geomapspublic.aucklandcouncil.govt.nz/viewer/index.html?appid=8513964216b544bf8aab2b3b85b8813d" target="_blank" rel="noopener">Auckland Council GeoMaps ↗</a> and search this address — it's the same underlying data, shown visually with all the council's own layer names and legends.
+    </div>
+    <div id="constraintsHost"></div>
+  `;
+}
+
+function prettifyFieldName(name){
+  return name
+    .replace(/_/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .replace(/\bId\b/g, "ID").replace(/\bAup\b/gi,"AUP");
+}
+
+function renderAttrTable(attrs){
+  const entries = Object.entries(attrs).slice(0, 7);
+  if(entries.length === 0) return "";
+  return `<table class="attr-table">${entries.map(([k,v]) =>
+    `<tr><th>${esc(prettifyFieldName(k))}</th><td>${esc(v)}</td></tr>`
+  ).join("")}</table>`;
+}
+
+function renderConstraints(results){
+  const host = document.getElementById("constraintsHost");
+  const byGroup = {};
+  results.forEach(r => { (byGroup[r.group] = byGroup[r.group] || []).push(r); });
+
+  let flaggedCount = 0;
+  let html = "";
+  for(const heading in byGroup){
+    html += `<h3 class="section-h">${esc(heading)}</h3><div class="constraint-list">`;
+    byGroup[heading].forEach(r => {
+      let dotClass = "clear";
+      const proximity = r.buffer ? `within ${r.buffer} m` : "on this site";
+      let statusText = r.buffer ? `Clear — none found ${proximity}` : "Clear — no mapped overlap";
+      let detailHtml = "";
+      if(!r.result.ok){
+        dotClass = "na";
+        statusText = "Couldn't check this layer";
+      }else if(r.result.features.length > 0){
+        dotClass = "flag";
+        statusText = `Present ${proximity} (${r.result.features.length} feature${r.result.features.length>1?"s":""})`;
+        flaggedCount++;
+        const attrs = cleanAttrs(r.result.features[0].attributes || {});
+        const attrTable = renderAttrTable(attrs);
+        const extraNote = r.result.features.length > 1
+          ? `<div class="cnote" style="margin-top:6px;">+ ${r.result.features.length - 1} more feature${r.result.features.length>2?"s":""} on this layer at this site, not shown.</div>` : "";
+        detailHtml = `
+          <div class="attr-wrap">
+            ${attrTable || `<div class="cnote">No further attributes returned by this layer.</div>`}
+            ${extraNote}
+            <a class="raw-link" href="${esc(r.result.url)}" target="_blank" rel="noopener">View raw source data ↗</a>
+          </div>`;
+      }
+      html += `
+        <div class="constraint">
+          <div class="dot ${dotClass}"></div>
+          <div class="ctext">
+            <div class="cname">${esc(r.name)}</div>
+            <div class="cdesc">${dotClass==="flag" ? esc(r.note) : (dotClass==="na" ? "This layer didn't respond — check manually on Auckland Council's GeoMaps viewer." : "No overlap found in Auckland Council's data.")}</div>
+            <div class="cnote">${esc(statusText)}</div>
+            ${detailHtml}
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+  host.innerHTML = html;
+  host.dataset.flagged = flaggedCount;
+}
+
+function updateVerdictStripe(zoneGroupInfo, results){
+  const flagged = results.filter(r => r.result.ok && r.result.features.length > 0).length;
+  const stripeEl = document.getElementById("stripeEl");
+  const tagEl = document.getElementById("verdictTag");
+  if(!stripeEl || !tagEl) return;
+
+  let baseVerdict = zoneGroupInfo ? zoneGroupInfo.verdict : "unknown";
+  // Escalate verdict if a lot of constraint layers are flagged, regardless of zone.
+  let finalVerdict = baseVerdict;
+  let finalLabel = zoneGroupInfo ? zoneGroupInfo.label : "Zone not identified";
+
+  if(baseVerdict !== "stop"){
+    if(flagged >= 4){
+      finalVerdict = "stop";
+      finalLabel = `Significant constraints (${flagged} overlays) — get advice before proceeding`;
+    }else if(flagged >= 1){
+      finalVerdict = baseVerdict === "go" ? "caution" : baseVerdict;
+      finalLabel = `${zoneGroupInfo ? zoneGroupInfo.label : "Check zoning"} — plus ${flagged} constraint${flagged>1?"s":""} to work around`;
+    }
+  }
+
+  stripeEl.className = "stripe " + finalVerdict;
+  tagEl.className = "verdict-tag tag-" + finalVerdict;
+  tagEl.textContent = finalLabel;
+}
+</script>
+</body>
+</html>
