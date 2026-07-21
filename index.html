@@ -691,6 +691,7 @@ const CONSTRAINT_GROUPS = [
   },
   {
     heading: "Underground pipes & services (within the parcel boundary)",
+    groupNote: "Coverage check, not just a distance issue: testing against real addresses has found this pipe network layer missing segments that do show up on GeoMaps — most likely in legacy pre-2010 council areas (old Rodney, Franklin, Waitākere, Manukau, Papakura district boundaries) where asset data migration into Auckland Council's unified system isn't complete everywhere. A \"clear\" result below means nothing was found in this dataset — it is not confirmation there's no pipe on site. Always cross-check <a href=\"https://geomapspublic.aucklandcouncil.govt.nz/viewer/index.html?appid=8513964216b544bf8aab2b3b85b8813d\" target=\"_blank\" rel=\"noopener\">GeoMaps</a> directly before relying on this for underground services.",
     items: [
       {name:"Wastewater pipe", service:"wm_Wastewater_Pipes_Public", note:"A wastewater main or lateral runs through this site. Building over or too close to it is usually restricted, and Watercare may require a building-over-pipe approval or the pipe to be relocated."},
       {name:"Stormwater pipe", service:"Stormwater_Pipe", note:"A public stormwater pipe runs through this site. Building over or too close to it is usually restricted without an approval from Auckland Council's Healthy Waters team."},
@@ -1072,11 +1073,17 @@ function renderConstraints(results){
   const host = document.getElementById("constraintsHost");
   const byGroup = {};
   results.forEach(r => { (byGroup[r.group] = byGroup[r.group] || []).push(r); });
+  const groupNoteByHeading = {};
+  CONSTRAINT_GROUPS.forEach(g => { if(g.groupNote) groupNoteByHeading[g.heading] = g.groupNote; });
 
   let flaggedCount = 0;
   let html = "";
   for(const heading in byGroup){
-    html += `<h3 class="section-h">${esc(heading)}</h3><div class="constraint-list">`;
+    html += `<h3 class="section-h">${esc(heading)}</h3>`;
+    if(groupNoteByHeading[heading]){
+      html += `<div class="geom-warning">${groupNoteByHeading[heading]}</div>`;
+    }
+    html += `<div class="constraint-list">`;
     byGroup[heading].forEach(r => {
       let dotClass = "clear";
       const proximity = r.buffer ? `within ${r.buffer} m` : "on this site";
