@@ -344,6 +344,82 @@
   }
   .geomaps-note a{color:var(--teal-2);font-weight:600;}
 
+  .zoneref{
+    margin-top:8px;
+  }
+  .zoneref-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    margin-top:14px;
+  }
+  .zonecard{
+    background:#fff;
+    padding:16px 18px;
+    transition:background .15s ease, box-shadow .15s ease;
+  }
+  .zonecard.current{
+    background:var(--green-bg);
+    box-shadow:inset 3px 0 0 var(--green);
+  }
+  .zonecard-name{
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:8px;
+  }
+  .zonecard-badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:10px;
+  }
+  .zonecard-badge{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    padding:3px 7px;
+    background:var(--paper-2);
+    color:var(--teal);
+    border-radius:2px;
+    white-space:nowrap;
+  }
+  .zonecard-desc{
+    font-size:12.5px;
+    line-height:1.5;
+    color:var(--teal);
+  }
+  .zonecard-current-tag{
+    display:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:var(--green);
+    margin-bottom:6px;
+  }
+  .zonecard.current .zonecard-current-tag{display:block;}
+  .zoneref-footnote{
+    font-size:12px;
+    color:var(--grey);
+    line-height:1.5;
+    margin-top:12px;
+  }
+  .zoneref-toggle{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--teal-2);
+    text-decoration:underline;
+    cursor:pointer;
+    background:none;
+    border:none;
+    padding:0;
+    margin-top:14px;
+  }
+
   h3.section-h{
     font-family:'Archivo Expanded','Archivo',sans-serif;
     font-size:15px;
@@ -449,6 +525,75 @@
     <div class="hint">Start typing — matching Auckland addresses appear below automatically. Can't find it? Use "Maps ↗" to confirm the address on Google Maps first.</div>
     <div id="candidateBox"></div>
   </header>
+
+  <div class="zoneref">
+    <button class="zoneref-toggle" id="zoneRefToggle" type="button">Show what each Auckland residential zone generally allows ▾</button>
+    <div id="zoneRefBody" style="display:none;">
+      <div class="zoneref-grid" id="zoneRefGrid">
+        <div class="zonecard" id="zonecard-sh">
+          <div class="zonecard-current-tag">This site's zone</div>
+          <div class="zonecard-name">Single House Zone</div>
+          <div class="zonecard-badges">
+            <span class="zonecard-badge">~8–9m / 2 storeys</span>
+            <span class="zonecard-badge">1 dwelling</span>
+            <span class="zonecard-badge">600m² min lot</span>
+          </div>
+          <div class="zonecard-desc">Auckland's most restrictive residential zone. One principal dwelling per site — a second full dwelling generally isn't permitted, only a minor dwelling (now via the national NES-DMRU standard). Covers established, leafy suburbs and often overlaps Special Character Area overlays.</div>
+        </div>
+        <div class="zonecard" id="zonecard-mhs">
+          <div class="zonecard-current-tag">This site's zone</div>
+          <div class="zonecard-name">Mixed Housing Suburban Zone</div>
+          <div class="zonecard-badges">
+            <span class="zonecard-badge">~8m / 2 storeys</span>
+            <span class="zonecard-badge">up to 3 dwellings</span>
+            <span class="zonecard-badge">400m² min lot</span>
+          </div>
+          <div class="zonecard-desc">A suburban intensification zone — up to three dwellings are permitted as of right, subject to built-form standards (setbacks, height in relation to boundary, landscaped area). Detached and attached housing in a mostly two-storey suburban character. Covers large parts of mid-Auckland.</div>
+        </div>
+        <div class="zonecard" id="zonecard-mhu">
+          <div class="zonecard-current-tag">This site's zone</div>
+          <div class="zonecard-name">Mixed Housing Urban Zone</div>
+          <div class="zonecard-badges">
+            <span class="zonecard-badge">~11m / 3 storeys</span>
+            <span class="zonecard-badge">up to 3 dwellings</span>
+            <span class="zonecard-badge">300m² min lot</span>
+          </div>
+          <div class="zonecard-desc">Auckland's main infill zone. Up to three dwellings permitted as of right, generally as three-storey terraces or low-rise apartments. Applied near centres and the public transport network to encourage higher-density urban living.</div>
+        </div>
+        <div class="zonecard" id="zonecard-thab">
+          <div class="zonecard-current-tag">This site's zone</div>
+          <div class="zonecard-name">Terrace Housing &amp; Apartment Buildings Zone</div>
+          <div class="zonecard-badges">
+            <span class="zonecard-badge">~16–18m typical</span>
+            <span class="zonecard-badge">apartments / terraces</span>
+            <span class="zonecard-badge">1,200m² min lot</span>
+          </div>
+          <div class="zonecard-desc">Auckland's most intensive residential zone outside centres — mid-rise apartments and terraces near metropolitan and town centres or rapid transit. Larger developments typically go through resource consent with a design assessment rather than being fully permitted.</div>
+        </div>
+        <div class="zonecard" id="zonecard-ll">
+          <div class="zonecard-current-tag">This site's zone</div>
+          <div class="zonecard-name">Large Lot Zone</div>
+          <div class="zonecard-badges">
+            <span class="zonecard-badge">~8–9m typical</span>
+            <span class="zonecard-badge">1 dwelling</span>
+            <span class="zonecard-badge">4,000m² min lot</span>
+          </div>
+          <div class="zonecard-desc">A low-intensity, semi-rural residential zone at the urban fringe — large sections, and reticulated services (especially wastewater) aren't always present. One dwelling per site; a minor dwelling can generally use the national NES-DMRU permitted pathway instead of the zone's own (restricted discretionary) minor dwelling rule.</div>
+        </div>
+        <div class="zonecard" id="zonecard-rcs">
+          <div class="zonecard-current-tag">This site's zone</div>
+          <div class="zonecard-name">Rural and Coastal Settlement Zone</div>
+          <div class="zonecard-badges">
+            <span class="zonecard-badge">~8–9m typical</span>
+            <span class="zonecard-badge">1 dwelling</span>
+            <span class="zonecard-badge">2,500m² min lot</span>
+          </div>
+          <div class="zonecard-desc">Small coastal and rural settlements outside the main urban area, kept at low density to match a rural/coastal character. One dwelling per site; a minor dwelling can generally use the national NES-DMRU permitted pathway instead of the zone's own (restricted discretionary) minor dwelling rule.</div>
+        </div>
+      </div>
+      <div class="zoneref-footnote">Figures are the current operative Auckland Unitary Plan provisions (subdivision minimums and general permitted-activity dwelling counts) — actual yield always depends on meeting every built-form standard, not just these headline numbers. Auckland Council notified Plan Change 120 in November 2025, which proposes reshaping these zones again; it isn't operative yet, so what's shown here is what currently applies. Always confirm on the <a href="https://unitaryplan.aucklandcouncil.govt.nz/" target="_blank" rel="noopener">Auckland Unitary Plan</a> site.</div>
+    </div>
+  </div>
 
   <section class="results" id="results"></section>
 
@@ -833,6 +978,31 @@ googleBtn.addEventListener("click", () => {
   window.open(googleMapsUrl(input.value), "_blank", "noopener");
 });
 
+const zoneRefToggle = document.getElementById("zoneRefToggle");
+const zoneRefBody = document.getElementById("zoneRefBody");
+zoneRefToggle.addEventListener("click", () => {
+  const open = zoneRefBody.style.display !== "none";
+  zoneRefBody.style.display = open ? "none" : "block";
+  zoneRefToggle.textContent = open
+    ? "Show what each Auckland residential zone generally allows ▾"
+    : "Hide zone reference ▴";
+});
+
+// Maps a zone CODE (from Unitary_Plan_Base_Zone) to its reference card id, for highlighting.
+const ZONECARD_BY_CODE = {19:"sh", 18:"mhs", 60:"mhu", 8:"thab", 23:"ll", 20:"rcs"};
+function highlightZoneCard(zoneInfo){
+  document.querySelectorAll(".zonecard.current").forEach(el => el.classList.remove("current"));
+  if(!zoneInfo) return;
+  const cardId = ZONECARD_BY_CODE[zoneInfo.code];
+  if(!cardId) return;
+  const card = document.getElementById("zonecard-" + cardId);
+  if(card){
+    card.classList.add("current");
+    zoneRefBody.style.display = "block";
+    zoneRefToggle.textContent = "Hide zone reference ▴";
+  }
+}
+
 // If this page is running inside an embedded/sandboxed preview (e.g. pasted into
 // a chat tool), outbound calls to Auckland Council's servers are typically blocked.
 // Let the person know to open the file directly instead of hitting a silent wall.
@@ -979,6 +1149,7 @@ async function selectAddress(feature){
 }
 
 function renderShell(addr, zoneInfo, zoneGroupInfo, propInfo, nesCategory, siteGeom, multiZoneCount){
+  highlightZoneCard(zoneInfo);
   const stripeClass = zoneGroupInfo ? zoneGroupInfo.verdict : "unknown";
   const tagClass = "tag-" + stripeClass;
   const verdictLabel = zoneGroupInfo ? zoneGroupInfo.label : "Zone not identified";
