@@ -942,6 +942,29 @@ function googleMapsUrl(term){
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 }
 
+// Shrinks a parcel polygon 1m inward before checking zoning. Parcel boundaries almost
+// always run exactly along the road-reserve line, and the zone layer's own polygon
+// edges rarely line up pixel-for-pixel with the cadastral boundary — so an unshrunk
+// parcel very often "catches" a sliver of the Road zone or a neighbouring zone right
+// at the boundary. A 1m inward erosion keeps the check safely inside the actual site.
+// Uses Esri's public Geometry Service (a different, external Esri utility, not
+// Auckland Council's own data) — if it's unreachable, this falls back to the
+// unshrunk parcel rather than blocking the whole check.
+async function erodeParcelPolygon(rings){
+  const GEOM_SERVICE = "https://utility.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer/buffer";
+  const geomsParam = JSON.stringify({geometryType:"esriGeometryPolygon", geometries:[{rings, spatialReference:{wkid:102100}}]});
+  const url = `${GEOM_SERVICE}?geometries=${encodeURIComponent(geomsParam)}&inSR=102100&outSR=102100&bufferSR=102100&distances=-1&unit=9001&unionResults=true&geodesic=false&f=json`;
+  try{
+    const data = await jsonp(url);
+    if(data.error || !data.geometries || !data.geometries.length || !data.geometries[0].rings || !data.geometries[0].rings.length){
+      return null; // erosion failed, or the parcel was too narrow to survive a 1m shrink
+    }
+    return data.geometries[0].rings;
+  }catch(e){
+    return null;
+  }
+}
+
 function cleanAttrs(attrs){
   const skip = new Set(["OBJECTID","GlobalID","Shape__Area","Shape__Length","GROUPZONE","VALIDATIONSTATE"]);
   const out = {};
@@ -1116,7 +1139,18 @@ async function selectAddress(feature){
     <div class="loading-row"><span class="spinner"></span>Checking zoning and ${CONSTRAINT_GROUPS.reduce((n,g)=>n+g.items.length,0)} constraint layers across the ${siteGeom.type === "polygon" ? "parcel boundary" : "address point"} for ${esc(addr)}…</div>
   `;
 
-  const zoneRes = await queryLayer("Unitary_Plan_Base_Zone", siteGeom);
+  // For the zone check specifically (only), use a version of the parcel shrunk 1m
+  // inward — this avoids the very common case of the boundary catching a sliver of
+  // the Road zone or a neighbouring zone right at the property line. Every other
+  // constraint check below still uses the full, unshrunk parcel.
+  let zoneGeom = siteGeom;
+  if(siteGeom.type === "polygon"){
+    const erodedRings = await erodeParcelPolygon(siteGeom.rings);
+    if(erodedRings && erodedRings.length){
+      zoneGeom = {type:"polygon", rings: erodedRings};
+    }
+  }
+  const zoneRes = await queryLayer("Unitary_Plan_Base_Zone", zoneGeom);
 
   let zoneInfo = null;
   let multiZoneCount = 0;
